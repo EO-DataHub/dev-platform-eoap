@@ -117,3 +117,6 @@ This setup has been validated in the following environments:
 * Remote clusters:
   * EODH AWS ECK
 
+## Getting started in the code server pod
+
+See the [Getting started](getting-started/) folder for example artifacts and step-by-step instructions.
