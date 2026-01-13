@@ -12,7 +12,7 @@ curl -L https://github.com/EO-DataHub/dev-platform-eoap/archive/refs/heads/main.
 
 cp app-water-bodies-cloud-native.1.1.0.cwl /calrissian
 
-cat << EOF > /calrissian/app-water-bodies-cloud-native-params.yaml
+cat << EOF > /calrissian/params.yaml
 stac_items:
 - "https://earth-search.aws.element84.com/v0/collections/sentinel-s2-l2a-cogs/items/S2A_10TFK_20210708_0_L2A"
 - "https://earth-search.aws.element84.com/v0/collections/sentinel-s2-l2a-cogs/items/S2B_10TFK_20210713_0_L2A"

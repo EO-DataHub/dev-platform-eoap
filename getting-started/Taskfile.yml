@@ -8,13 +8,17 @@ tasks:
 
   run-calrissian:
     desc: "Run Calrissian locally"
+    vars:
+      WORKFLOW_ID: '{{.WORKFLOW_ID | default "water-bodies"}}'
+      WORKFLOW: '{{.WORKFLOW | default "/workspace/getting-started/app-water-bodies-cloud-native.1.1.0.cwl"}}'
+      WORKFLOW_PARAMS: '{{.WORKFLOW_PARAMS | default "/calrissian/params.yaml"}}'
     cmds:
       - |
         calrissian \
             --stdout \
-            /calrissian/app-water-bodies-cloud-native-results.json \
+            /calrissian/{{.WORKFLOW_ID}}/results.json \
             --stderr \
-            /calrissian/app-water-bodies-cloud-native.log \
+            /calrissian/{{.WORKFLOW_ID}}/log.json \
             --pod-serviceaccount \
             calrissian-sa \
             --max-ram \
@@ -24,24 +28,24 @@ tasks:
             --tmp-outdir-prefix \
             /calrissian/tmp/ \
             --outdir \
-            /calrissian/results \
+            /calrissian/{{.WORKFLOW_ID}}/results \
             --usage-report \
-            /calrissian/calrissian-usage.json \
+            /calrissian/{{.WORKFLOW_ID}}/usage.json \
             --tool-logs-basepath \
             /calrissian/tool-logs \
             --pod-nodeselectors \
             /calrissian/pod-node-selector.yaml \
-            /calrissian/app-water-bodies-cloud-native.1.1.0.cwl#water-bodies \
-            /calrissian/app-water-bodies-cloud-native-params.yaml
+            /calrissian/{{.WORKFLOW}}#{{.WORKFLOW_ID}} \
+            /calrissian/{{.WORKFLOW_PARAMS}}
 
   wrap: 
     desc: "Wrap CWL workflow with stage-in/stage-out steps"
     vars:
-      WORKFLOW_ID: "water-bodies"
-      WORKFLOW: "/workspace/getting-started/water-bodies-cloud-native.1.1.0.cwl"
+      WORKFLOW_ID: '{{.WORKFLOW_ID | default "water-bodies"}}'
+      WORKFLOW: '{{.WORKFLOW | default "/workspace/getting-started/water-bodies-cloud-native.1.1.0.cwl"}}'
     cmds:
       - |
         cwl-wrapper \
           -c ~/.cwlwrapper/default.conf \
-          --workflow-id ${WORKFLOW_ID} \
-          ${WORKFLOW}
+          --workflow-id {{.WORKFLOW_ID}} \
+          {{.WORKFLOW}}
