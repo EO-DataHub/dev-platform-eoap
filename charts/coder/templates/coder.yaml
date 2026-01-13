@@ -34,6 +34,10 @@ spec:
           - name: init
             mountPath: /opt/init/.init.sh
             subPath: init
+          {{ if .Values.calrissian.enabled }}
+          - mountPath: /calrissian
+            name: calrissian-volume
+          {{ end }}
         resources:
           limits:
             cpu: '1'

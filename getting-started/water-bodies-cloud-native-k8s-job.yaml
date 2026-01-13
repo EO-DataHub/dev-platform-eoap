@@ -22,6 +22,8 @@ spec:
             - /calrissian/app-water-bodies-cloud-native-results.json
             - --stderr 
             - /calrissian/app-water-bodies-cloud-native.log
+            - --pod-serviceaccount
+            - calrissian-sa
             - --max-ram 
             - 4G
             - --max-cores 
