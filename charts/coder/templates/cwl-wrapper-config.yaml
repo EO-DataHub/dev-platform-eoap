@@ -1,0 +1,182 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cwl-wrapper-config
+  namespace: dev-platform-eoap
+data:
+  stagein.yaml: |-
+      cwlVersion: v1.0
+      class: CommandLineTool
+      id: stage
+      doc: "Stage-in STAC items"
+      inputs: {}
+      outputs: {}
+      baseCommand:
+        - python
+        - /stage.py
+      requirements:
+        DockerRequirement:
+          dockerPull: public.ecr.aws/eodh/eodhp-ades-stagein:0.1.6
+        EnvVarRequirement:
+          envDef:
+            WORKSPACE_ACCESS_TOKEN: {{ .Values.datahub.workspaceAccessToken | quote }}
+            DATAHUB_DOMAIN: {{ .Values.datahub.domain | quote }}
+            DATAHUB_WORKSPACE_DOMAIN: {{ .Values.datahub.workspaceDomain | quote }}
+        InlineJavascriptRequirement: {}
+  stageout.yaml: |-
+      cwlVersion: v1.0
+      class: CommandLineTool
+      id: stage-out
+      doc: "Stage-out the results to S3"
+      inputs:
+        process:
+          type: string
+        job_id:
+          type: string
+        workflow_id:
+          type: string
+        STAGEOUT_OUTPUT:
+          type: string
+          type: string
+        CALLING_WORKSPACE:
+          type: string
+        EXECUTING_WORKSPACE:
+          type: string
+        STAGEOUT_PULSAR_URL:
+          type: string
+        WORKSPACE_DOMAIN:
+          type: string
+      outputs:
+        StacCatalogUri:
+          outputBinding:
+            outputEval: ${  return "s3://" + inputs.STAGEOUT_OUTPUT + "/" + inputs.CALLING_WORKSPACE + "/" + inputs.process + ".json"; }
+          type: string
+      baseCommand:
+        - python
+        - "-m" 
+        - stageout
+      arguments:
+        - valueFrom: |
+                      ${
+                          if( !Array.isArray(inputs.wf_outputs) ) 
+                          {
+                              return inputs.wf_outputs.path;
+                          }
+                          var args=[];
+                          for (var i = 0; i < inputs.wf_outputs.length; i++) 
+                          {
+                              args.push(inputs.wf_outputs[i].path);
+                          }
+                          return args;
+                      }
+        - $( inputs.STAGEOUT_OUTPUT )
+        - $( inputs.process )
+        - $( inputs.job_id )
+        - $( inputs.workflow_id )
+        - valueFrom: |
+                      ${ return `https://{{ .Values.datahub.workspaceDomain }}/catalogs/user/catalogs/${inputs.EXECUTING_WORKSPACE}/jobs/${inputs.job_id}`; }
+      requirements:
+        DockerRequirement:
+          dockerPull: public.ecr.aws/eodh/eodhp-ades-stageout:0.1.15
+        InlineJavascriptRequirement: {}
+        EnvVarRequirement:
+          envDef:
+            WORKSPACE: $( inputs.CALLING_WORKSPACE )
+            PULSAR_URL: $( inputs.STAGEOUT_PULSAR_URL )
+            WORKSPACE_DOMAIN: $( inputs.WORKSPACE_DOMAIN )
+            SPDX_S3_BUCKET: "spdx-public-{{ .Values.datahub.spdxBucket }}"
+            HOSTED_ZONE: "{{ .Values.datahub.hostedZone }}"
+  main.yaml: |-
+    class: Workflow
+    $namespaces:
+      cwltool: http://commonwl.org/cwltool#
+    doc: Main stage manager
+    id: main
+    label: macro-cwl
+    inputs: {}
+    outputs:
+      StacCatalogUri:
+        outputSource:
+          - node_stage_out/s3_catalog_output
+        type: string
+    hints:
+      "cwltool:Secrets":
+        secrets: []
+    requirements:
+      SubworkflowFeatureRequirement: {}
+      ScatterFeatureRequirement: {}
+      InlineJavascriptRequirement: {}
+
+  rules.yaml: |-
+    rulez:
+      version: 1
+
+    parser:
+      type: $graph
+      driver: cwl
+
+    onstage:
+      driver: cwl
+
+      stage_in:
+        connection_node: node_stage_in
+        if_scatter:
+          scatterMethod: dotproduct
+        input:
+          template:
+            overwrite: True
+
+      on_stage:
+        connection_node: on_stage
+
+      stage_out:
+        connection_node: node_stage_out
+        scatter: False
+        if_scatter:
+          scatterMethod: dotproduct
+        follow_node: node_metrics_out
+
+
+    output:
+      driver: cwl
+      name: '-'
+      type: $graph
+
+
+    cwl:
+      GlobalInput:
+        Directory: string
+        Directory[]: string[]
+
+      OptionalInput:
+        Directory: string?
+        Directory[]: string[]?
+
+      stage_in:
+        Directory:
+          type: string
+
+        Directory[]:
+          type: string[]
+
+      stage_out:
+        Directory:
+          type: Directory
+
+        Directory[]:
+          type: Directory[]
+
+      outputBindingResult:
+        command:
+          Directory:
+            outputBinding:
+              glob: .
+            type: Directory
+          Directory[]:
+            outputBinding:
+              glob: .
+            type: Directory[]
+        stepOut:
+          type:
+            items: Directory
+            type: array

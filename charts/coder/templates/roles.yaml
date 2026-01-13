@@ -1,0 +1,57 @@
+{{- if .Values.calrissian.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-manager-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["create","patch","delete","list","watch","get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: log-reader-role
+rules:
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get","list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: job-submitter-role
+rules:
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["create","patch","delete","list","watch","get"]
+{{- end }}
+{{- if .Values.skaffold.enabled }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-exec-role
+rules:
+- verbs:
+    - '*'
+  apiGroups:
+    - ''
+  resources:
+    - pods/exec
+{{- end }}
+{{- if .Values.daskGateway.enabled }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dask-configmap-role
+rules:
+- verbs:
+    - create
+    - delete
+  apiGroups:
+    - ''
+  resources:
+    - configmaps
+{{- end }}
