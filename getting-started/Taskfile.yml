@@ -45,7 +45,7 @@ tasks:
     desc: "Wrap CWL workflow with stage-in/stage-out steps"
     vars:
       WORKFLOW_ID: '{{.WORKFLOW_ID | default "water-bodies"}}'
-      WORKFLOW: '{{.WORKFLOW | default "/workspace/getting-started/water-bodies-cloud-native.1.1.0.cwl"}}'
+      WORKFLOW: '{{.WORKFLOW | default "/workspace/getting-started/app-water-bodies-cloud-native.1.1.0.cwl"}}'
     cmds:
       - |
         cwl-wrapper \
