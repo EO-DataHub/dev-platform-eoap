@@ -3,8 +3,10 @@ version: '3'
 tasks:
   submit-k8s-job:
     desc: "Submit water bodies detection job to Kubernetes cluster"
+    vars:
+      JOB_MANIFEST: '{{.JOB_MANIFEST | default "/workspace/getting-started/water-bodies-cloud-native-k8s-job.yaml"}}'
     cmds:
-      - kubectl apply -f water-bodies-cloud-native-k8s-job.yaml
+      - kubectl apply -f {{.JOB_MANIFEST}}
 
   run-calrissian:
     desc: "Run Calrissian locally"
@@ -14,6 +16,7 @@ tasks:
       WORKFLOW_PARAMS: '{{.WORKFLOW_PARAMS | default "/calrissian/params.yaml"}}'
     cmds:
       - |
+        mkdir -p /calrissian/{{.WORKFLOW_ID}}
         calrissian \
             --stdout \
             /calrissian/{{.WORKFLOW_ID}}/results.json \
@@ -35,8 +38,8 @@ tasks:
             /calrissian/tool-logs \
             --pod-nodeselectors \
             /calrissian/pod-node-selector.yaml \
-            /calrissian/{{.WORKFLOW}}#{{.WORKFLOW_ID}} \
-            /calrissian/{{.WORKFLOW_PARAMS}}
+            {{.WORKFLOW}}#{{.WORKFLOW_ID}} \
+            {{.WORKFLOW_PARAMS}}
 
   wrap: 
     desc: "Wrap CWL workflow with stage-in/stage-out steps"
