@@ -1,0 +1,33 @@
+version: '3'
+
+tasks:
+  submit-k8s-job:
+    desc: "Submit water bodies detection job to Kubernetes cluster"
+    cmds:
+      - kubectl apply -f water-bodies-cloud-native-k8s-job.yaml
+
+  run-calrissian:
+    desc: "Run Calrissian locally"
+    cmds:
+      - |
+        calrissian \
+            --stdout \
+            /calrissian/app-water-bodies-cloud-native-results.json \
+            --stderr \
+            /calrissian/app-water-bodies-cloud-native.log \
+            --max-ram \
+            4G \
+            --max-cores \
+            "8" \
+            --tmp-outdir-prefix \
+            /calrissian/tmp/ \
+            --outdir \
+            /calrissian/results \
+            --usage-report \
+            /calrissian/calrissian-usage.json \
+            --tool-logs-basepath \
+            /calrissian/tool-logs \
+            --pod-nodeselectors \
+            /calrissian/pod-node-selector.yaml \
+            /calrissian/app-water-bodies-cloud-native.1.1.0.cwl#water-bodies \
+            /calrissian/app-water-bodies-cloud-native-params.yaml
